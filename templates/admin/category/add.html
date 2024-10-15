@@ -1,0 +1,150 @@
+{% extends "admin/layout/layout.html" %}
+
+{% block page_content %}
+    <main class="p-6" id="app">
+        {{ super() }}
+        <div class="card">
+            <div class="p-6">
+                <div class="flex justify-between items-center">
+                    <h4 class="card-title mb-1">Add Category</h4>
+                </div>
+                <div class="pt-5">
+                    <div id="backend_success" class="hidden"></div>
+                    <form method="post" enctype="multipart/form-data" novalidate
+                          @submit.prevent="submitForm">
+                        <div class="grid grid-cols-2 gap-6 mb-3">
+                            <div class="col-span-2">
+                                <label for="name" class="mb-2">Name</label>
+                                <input
+                                        type="text"
+                                        id="name"
+                                        v-model="form.name"
+                                        class="form-input"
+                                        placeholder="name"
+                                />
+                                <div v-cloak v-if="v$.form.name.$invalid && v$.form.name.$dirty" class="text-danger">
+                                    [[ v$.form.name.$errors[0].$message ]]
+                                </div>
+                            </div>
+
+                            <div class="col-span-2">
+                                <label for="address" class="mb-2">Description</label>
+                                <textarea
+                                        id="address"
+                                        v-model="form.description"
+                                        rows="5"
+                                        class="form-input"
+                                        placeholder="address"
+                                ></textarea>
+                                 <div v-cloak v-if="v$.form.description.$invalid && v$.form.description.$dirty" class="text-danger">
+                                    [[ v$.form.description.$errors[0].$message ]]
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="btn bg-primary text-white">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}
+
+{% block customJs %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-demi"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vuelidate/core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vuelidate/validators"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        const {createApp} = Vue;
+        const {useVuelidate} = Vuelidate;
+        const {required, minLength, maxLength, email, helpers} = VuelidateValidators;
+
+        let myDropzone;  // Declare it outside so we can access it globally
+
+
+        createApp({
+            delimiters: ['[[', ']]'], // Set custom delimiters for this component
+            data() {
+                return {
+                    form: {
+                        name: '',
+                        description: '',
+                    },
+                    errorMessage: ''  // Store server-side error messages
+                };
+            },
+            validations() {
+                return {
+                    form: {
+                        name: {
+                            required: helpers.withMessage("Name is required", required),
+                        },
+                        description: {
+                            required: helpers.withMessage("Description is required", required),
+                        },
+                    }
+                };
+            },
+            setup() {
+                return {
+                    v$: useVuelidate(),
+                };
+            },
+            mounted() {
+
+            },
+            methods: {
+                clearForm() {
+                    this.form = {
+                        name: '',
+                        description: '',
+                    };
+                    this.v$.$reset();
+                    this.errorMessage = '';
+                },
+                async submitForm() {
+                    this.v$.$touch();
+                    if (this.v$.$invalid) return;
+                    try {
+                        const response = await axios.post('/admin/category/add', this.form, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        if (response.data.status === true) {
+                            const messageContainer = document.querySelector("#backend_success");
+                            messageContainer.classList.remove('hidden');
+                            messageContainer.innerHTML = `
+                                <div class="flex justify-between items-center bg-success/10 text-success border border-success/20 text-sm rounded-md py-2 px-5 mb-2" role="alert">
+                                    <span>Category added successfully!</span>
+                                    <button class="text-xl/[0] ml-2" data-fc-dismiss="dismiss-message" type="button">
+                                        <i class="ri-close-line text-xl"></i>
+                                    </button>
+                                </div>
+                            `;
+
+                            // Clear form after successful submission
+                            this.clearForm();
+
+                            // Attach the dismiss button event listener
+                            document.querySelector("#backend_success button[data-fc-dismiss='dismiss-message']").addEventListener("click", function () {
+                                messageContainer.classList.add('hidden');
+                            });
+                        }
+                    } catch (error) {
+                        if (error.response && error.response.data.message) {
+                            this.errorMessage = error.response.data.message;
+                        } else {
+                            console.error('Error submitting form:', error);
+                        }
+                    }
+                },
+            }
+        }).mount('#app');
+    </script>
+{% endblock %}

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Admin Page</title>
+
+    {% include 'admin/layout/stylesheet.html' %}
+
+</head>
+<body>
+<div class="flex wrapper">
+    <!-- Sidenav Menu -->
+    {#    {% block app_menu %}#}
+    <div class="app-menu">
+
+        <!-- App Logo -->
+        <a href="{{ url_for('dashboard') }}" class="logo-box">
+            <!-- Light Logo -->
+            <div class="logo-light">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" class="logo-lg h-[22px]"
+                     alt="Light logo">
+                <img src="{{ url_for('static', filename='images/logo-sm.png') }}" class="logo-sm h-[22px]"
+                     alt="Small logo">
+            </div>
+
+            <!-- Dark Logo -->
+            <div class="logo-dark">
+                <img src="{{ url_for('static', filename='images/logo-dark.png') }}" class="logo-lg h-[22px]"
+                     alt="Dark logo">
+                <img src="{{ url_for('static', filename='images/logo-sm.png') }}" class="logo-sm h-[22px]"
+                     alt="Small logo">
+            </div>
+        </a>
+
+        <!-- Sidenav Menu Toggle Button -->
+        <button id="button-hover-toggle" class="absolute top-5 end-2 rounded-full p-1.5 z-50">
+            <span class="sr-only">Menu Toggle Button</span>
+            <i class="ri-checkbox-blank-circle-line text-xl"></i>
+        </button>
+
+        <!--- Menu -->
+        <div class="scrollbar" data-simplebar>
+            <ul class="menu" data-fc-type="accordion">
+                <li class="menu-title">Navigation</li>
+
+                <li class="menu-item">
+                    <a href="{{ url_for('dashboard') }}"
+                       class="menu-link{{ ' active' if module.full == 'dashboard' else '' }}">
+                            <span class="menu-icon">
+                                <i class="ri-home-4-line"></i>
+                            </span>
+                        <span class="menu-text"> Dashboard </span>
+                        <span class="badge bg-success rounded-full">2</span>
+                    </a>
+                </li>
+
+                <li class="menu-title">Apps</li>
+
+                <li class="menu-item">
+                    <a href="javascript:void(0)" data-fc-type="collapse" class="menu-link">
+                            <span class="menu-icon">
+                                <i class="ri-user-line"></i>
+                            </span>
+                        <span class="menu-text"> Users </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul class="sub-menu hidden">
+                        <li class="menu-item">
+                            <a href="{{ url_for('user_list') }}" class="menu-link">
+                                <span class="menu-text">List</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('user_add') }}" class="menu-link">
+                                <span class="menu-text">Add</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="menu-item">
+                    <a href="javascript:void(0)" data-fc-type="collapse" class="menu-link">
+                        <span class="menu-icon">
+                            <i class="ri-list-check-2"></i>
+                        </span>
+                        <span class="menu-text">Category</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul class="sub-menu hidden">
+                        <li class="menu-item">
+                            <a href="{{ url_for('category_list') }}" class="menu-link">
+                                <span class="menu-text">List</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('category_add') }}" class="menu-link">
+                                <span class="menu-text">Add</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="menu-item">
+                    <a href="javascript:void(0)" data-fc-type="collapse" class="menu-link">
+                        <span class="menu-icon">
+                            <i class= "ri-price-tag-3-line"></i>
+                        </span>
+                        <span class="menu-text">Product</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <ul class="sub-menu hidden">
+                        <li class="menu-item">
+                            <a href="{{ url_for('product_list') }}" class="menu-link">
+                                <span class="menu-text">List</span>
+                            </a>
+                        </li>
+                        <li class="menu-item">
+                            <a href="{{ url_for('product_add') }}" class="menu-link">
+                                <span class="menu-text">Add</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="menu-item">
+                    <a href="apps-calendar.html" class="menu-link">
+                            <span class="menu-icon">
+                                <i class="ri-calendar-event-line"></i>
+                            </span>
+                        <span class="menu-text"> Calendar </span>
+                    </a>
+                </li>
+            </ul>
+
+        </div>
+    </div>
+    {#    {% endblock %}#}
+    <!-- Sidenav Menu End  -->
+
+
+    <div class="page-content">
+        {% include 'admin/layout/header.html' %}
+
+        {% block page_content %}
+            <!-- Page Title Start -->
+            <div class="flex justify-between items-center mb-6">
+                <h4 class="text-slate-900 dark:text-slate-200 text-lg font-medium">{{ module.main }}</h4>
+
+                <div class="md:flex hidden items-center gap-2.5 font-semibold">
+                    <div class="flex items-center gap-2">
+                        <a href="{{ url_for('dashboard') }}"
+                           class="text-sm font-medium text-slate-700 dark:text-slate-400">Attex</a>
+                    </div>
+                    {% if module.mainLink %}
+                        <div class="flex items-center gap-2">
+                            <i class="ri-arrow-right-s-line text-base text-slate-400 rtl:rotate-180"></i>
+                            <a href="{{ url_for(module.mainLink) }}"
+                               class="text-sm font-medium text-slate-700 dark:text-slate-400">{{ module.main }}</a>
+                        </div>
+                    {% endif %}
+                    {% if module.purpose %}
+                        <div class="flex items-center gap-2">
+                            <i class="ri-arrow-right-s-line text-base text-slate-400 rtl:rotate-180"></i>
+                            <a href="{{ url_for(module.purposeLink, id=module.id) if module.id else url_for(module.purposeLink) }}"
+                               class="text-sm font-medium text-slate-700 dark:text-slate-400"
+                               aria-current="page">{{ module.purpose }}</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Page Title End -->
+        {% endblock %}
+
+        {% include 'admin/layout/footer.html' %}
+    </div>
+
+
+    {#    {% block theme_customization %}#}
+    <div id="theme-customization"
+         class="fc-offcanvas-open:translate-x-0 hidden translate-x-full rtl:-translate-x-full fixed inset-y-0 end-0 transition-all duration-300 transform max-w-72 w-full z-50 bg-white dark:bg-gray-800"
+         tabindex="-1">
+        <div class="h-16 flex items-center text-white bg-primary px-6 gap-3">
+            <h5 class="text-base flex-grow">Theme Settings</h5>
+            <button type="button" data-fc-dismiss><i class="ri-close-line text-xl"></i></button>
+        </div>
+
+        <div class="h-[calc(100vh-128px)]" data-simplebar>
+            <div class="p-6">
+                <div class="mb-6">
+                    <h5 class="font-semibold text-sm mb-3">Theme</h5>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-mode"
+                                   id="layout-color-light" value="light">
+                            <label class="ms-1.5" for="layout-color-light"> Light </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-mode"
+                                   id="layout-color-dark" value="dark">
+                            <label class="ms-1.5" for="layout-color-dark"> Dark </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h5 class="font-semibold text-sm mb-3">Direction</h5>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="dir" id="direction-ltr"
+                                   value="ltr">
+                            <label class="ms-1.5" for="direction-ltr"> LTR </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="dir" id="direction-rtl"
+                                   value="rtl">
+                            <label class="ms-1.5" for="direction-rtl"> RTL </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6 2xl:block hidden">
+                    <h5 class="font-semibold text-sm mb-3">Content Width</h5>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-layout-width"
+                                   id="layout-mode-default" value="default">
+                            <label class="ms-1.5" for="layout-mode-default"> Fluid </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-layout-width"
+                                   id="layout-mode-boxed" value="boxed">
+                            <label class="ms-1.5" for="layout-mode-boxed"> Boxed </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h5 class="font-semibold text-sm mb-3">Sidenav View</h5>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-sidenav-view"
+                                   id="sidenav-view-default" value="default">
+                            </label>
+                            <label class="ms-1.5" for="sidenav-view-default"> Default </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-sidenav-view"
+                                   id="sidenav-view-sm" value="sm">
+                            <label class="ms-1.5" for="sidenav-view-sm"> Small </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-sidenav-view"
+                                   id="sidenav-view-md" value="md">
+                            <label class="ms-1.5" for="sidenav-view-md"> Compact </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-sidenav-view"
+                                   id="sidenav-view-mobile" value="mobile">
+                            <label class="ms-1.5" for="sidenav-view-mobile"> Mobile </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-sidenav-view"
+                                   id="sidenav-view-hidden" value="hidden">
+                            <label class="ms-1.5" for="sidenav-view-hidden"> Hidden </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-sidenav-view"
+                                   id="sidenav-view-hover" value="hover">
+                            <label class="ms-1.5" for="sidenav-view-hover"> Hover </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-sidenav-view"
+                                   id="sidenav-view-hover-active" value="hover-active">
+                            <label class="ms-1.5" for="sidenav-view-hover-active"> Hover Active </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h5 class="font-semibold text-sm mb-3">Menu Color</h5>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-menu-color"
+                                   id="menu-color-light" value="light">
+                            <label class="ms-1.5" for="menu-color-light"> Light </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-menu-color"
+                                   id="menu-color-dark" value="dark">
+                            <label class="ms-1.5" for="menu-color-dark"> Dark </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-menu-color"
+                                   id="menu-color-brand" value="brand">
+                            <label class="ms-1.5" for="menu-color-brand"> Brand </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <h5 class="font-semibold text-sm mb-3">Topbar Color</h5>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-topbar-color"
+                                   id="topbar-color-light" value="light">
+                            <label class="ms-1.5" for="topbar-color-light"> Light </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-topbar-color"
+                                   id="topbar-color-dark" value="dark">
+                            <label class="ms-1.5" for="topbar-color-dark"> Dark </label>
+                        </div>
+
+                        <div class="flex items-center">
+                            <input class="form-switch form-switch-sm" type="checkbox" name="data-topbar-color"
+                                   id="topbar-color-brand" value="brand">
+                            <label class="ms-1.5" for="topbar-color-brand"> Brand </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h5 class="font-semibold text-sm mb-3">Layout Position</h5>
+
+                    <div class="flex btn-radio">
+                        <input type="radio" class="form-radio hidden" name="data-layout-position"
+                               id="layout-position-fixed" value="fixed">
+                        <label class="btn rounded-e-none bg-gray-100 dark:bg-gray-700"
+                               for="layout-position-fixed">Fixed</label>
+                        <input type="radio" class="form-radio hidden" name="data-layout-position"
+                               id="layout-position-scrollable" value="scrollable">
+                        <label class="btn rounded-s-none bg-gray-100 dark:bg-gray-700"
+                               for="layout-position-scrollable">Scrollable</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="h-16 p-4 flex items-center gap-4 border-t border-gray-300 dark:border-gray-600 px-6">
+            <button type="button" class="btn bg-primary text-white w-1/2" id="reset-layout">Reset</button>
+            <button type="button" class="btn bg-light text-dark dark:text-light dark:bg-opacity-10 w-1/2">Buy Now
+            </button>
+        </div>
+    </div>
+    {#    {% endblock %}#}
+</div>
+
+
+{% include 'admin/layout/mainJs.html' %}
+
+{% block customJs %}
+
+{% endblock %}
+
+</body>
+</html>

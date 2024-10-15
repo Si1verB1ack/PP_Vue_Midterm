@@ -1,0 +1,321 @@
+{% extends "admin/layout/layout.html" %}
+
+{% block page_content %}
+    <main class="p-6" id="app">
+        {{ super() }}
+        <div class="card">
+            <div class="p-6">
+                <div class="flex justify-between items-center">
+                    <h4 class="card-title mb-1">Add Product</h4>
+                </div>
+                <div class="pt-5">
+                    <div id="backend_success" class="hidden"></div>
+                    <form method="post" enctype="multipart/form-data" novalidate
+                          @submit.prevent="submitForm">
+                        <div class="grid grid-cols-2 gap-6 mb-3">
+                            <div>
+                                <label for="name" class="mb-2">Name</label>
+                                <input
+                                        type="text"
+                                        id="name"
+                                        v-model="form.name"
+                                        class="form-input flex"
+                                        placeholder="name"
+                                />
+                                <div v-cloak v-if="v$.form.name.$invalid && v$.form.name.$dirty" class="text-danger">
+                                    [[ v$.form.name.$errors[0].$message ]]
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="code" class="mb-2">Code</label>
+                                <input
+                                        type="text"
+                                        id="code"
+                                        v-model="form.code"
+                                        class="form-input"
+                                        placeholder="code"
+                                />
+                                <div v-cloak v-if="v$.form.code.$invalid && v$.form.code.$dirty"
+                                     class="text-danger">
+                                    [[ v$.form.code.$errors[0].$message ]]
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="category" class="mb-2">Category</label>
+                                <select id="category" v-model="form.category" class="form-select">
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="qty" class="mb-2">Qty</label>
+                                <input
+                                        type="number"
+                                        id="qty"
+                                        v-model="form.qty"
+                                        class="form-input"
+                                        placeholder="qty"
+                                />
+                                <div v-cloak v-if="v$.form.qty.$invalid && v$.form.qty.$dirty" class="text-danger">
+                                    [[ v$.form.qty.$errors[0].$message ]]
+                                </div>
+                                <div v-cloak v-if="errorMessage" class="text-danger">
+                                    [[ errorMessage ]]
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="cost" class="mb-2">Cost</label>
+                                <input
+                                        type="number"
+                                        id="cost"
+                                        v-model="form.cost"
+                                        class="form-input"
+                                        placeholder="cost"
+                                />
+                                <div v-cloak v-if="v$.form.cost.$invalid && v$.form.cost.$dirty" class="text-danger">
+                                    [[ v$.form.cost.$errors[0].$message ]]
+                                </div>
+                                <div v-cloak v-if="errorMessage" class="text-danger">
+                                    [[ errorMessage ]]
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="price" class="mb-2">Price</label>
+                                <input
+                                        type="number"
+                                        id="price"
+                                        v-model="form.price"
+                                        class="form-input"
+                                        placeholder="price"
+                                />
+                                <div v-cloak v-if="v$.form.price.$invalid && v$.form.price.$dirty" class="text-danger">
+                                    [[ v$.form.price.$errors[0].$message ]]
+                                </div>
+                                <div v-cloak v-if="errorMessage" class="text-danger">
+                                    [[ errorMessage ]]
+                                </div>
+                            </div>
+
+                            <div class="col-span-2">
+                                <input type="hidden" id="image_id" v-model="form.image_id">
+                                <label for="image" class="text-slate-200 mb-2">Image</label>
+                                <div id="upload-message" class="hidden"></div>
+                                <div id="image"
+                                     class="dropzone dz-clickable bg-gray-700 border border-gray-600">
+                                    <div class="dz-message needsclick w-full">
+                                        <br>
+                                        <div class="mb-3">
+                                            <i class="ri-upload-cloud-line text-4xl text-gray-300 dark:text-gray-200"></i>
+                                        </div>
+                                        <h5 class="text-xl text-gray-600 dark:text-gray-200">Drop files here or click to
+                                            upload.</h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" class="btn bg-primary text-white">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}
+
+{% block customJs %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-demi"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vuelidate/core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vuelidate/validators"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        const {createApp} = Vue;
+        const {useVuelidate} = Vuelidate;
+        const {required, minLength, maxLength, qty, helpers} = VuelidateValidators;
+
+        let myDropzone;  // Declare it outside so we can access it globally
+
+
+        createApp({
+            delimiters: ['[[', ']]'], // Set custom delimiters for this component
+            data() {
+                return {
+                    form: {
+                        name: '',
+                        code: '',
+                        category: null,
+                        qty: '',
+                        cost: '',
+                        price: '',
+                        image_id: ''
+                    },
+                    errorMessage: ''
+                    // Store server-side error messages
+                };
+            },
+            validations() {
+                return {
+                    form: {
+                        name: {
+                            required: helpers.withMessage("Name is required", required),
+                        },
+                        code: {
+                            required: helpers.withMessage("Code is required", required),
+                        },
+                        qty: {
+                            required: helpers.withMessage("Quantity is required", required),
+                        },
+                        cost: {
+                            required: helpers.withMessage("Cost is required", required),
+                        },
+                        price: {
+                            required: helpers.withMessage("Price is required", required),
+                        },
+                    }
+                };
+            },
+            setup() {
+                return {
+                    v$: useVuelidate(),
+                };
+            },
+            mounted() {
+                this.initDropzone()
+                this.default_cate_id()
+            },
+            methods: {
+                default_cate_id() {
+                    const categories_id = {{ categories_id|tojson }};
+                    if (categories_id.length > 0) {
+                        this.form.category = categories_id[0].id;  // Set the first category ID as default
+                    }
+                },
+                initDropzone() {
+                    const vm = this;
+                    // Initialize Dropzone in mounted lifecycle
+
+                    Dropzone.autoDiscover = false;
+
+                    const dropzoneElement = document.querySelector("#image");
+                    myDropzone = new Dropzone(dropzoneElement, {
+                        url: "/admin/upload-temp-image/create",
+                        maxFiles: 1,
+                        maxFilesize: 4, // Maximum file size 4MB
+                        paramName: 'image',
+                        addRemoveLinks: true,
+                        acceptedFiles: "image/jpeg,image/png,image/gif",
+
+                        success: function (file, response) {
+                            vm.handleSuccess(file, response);
+                        },
+
+                        error: function (file, response) {
+                            vm.handleError(file, response);
+                            myDropzone.removeFile(file);
+                        },
+                    });
+
+                    myDropzone.on("addedfile", function () {
+                        if (myDropzone.files.length > 1) {
+                            myDropzone.removeFile(myDropzone.files[0]);
+                        }
+                    });
+                },
+                clearForm() {
+                    this.form = {
+                        name: '',
+                        code: '',
+                        category: '',
+                        qty: '',
+                        cost: '',
+                        price: '',
+                        image_id: ''
+                    };
+                    this.default_cate_id()
+                    if (myDropzone) {
+                        myDropzone.removeAllFiles(true);  // Clear all files
+                    }
+                    this.v$.$reset();
+                    this.errorMessage = '';
+                },
+                async submitForm() {
+                    this.v$.$touch();
+                    if (this.v$.$invalid) return;
+                    try {
+                        const response = await axios.post('/admin/product/add', this.form, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        if (response.data.status === true) {
+                            const messageContainer = document.querySelector("#backend_success");
+                            messageContainer.classList.remove('hidden');
+                            messageContainer.innerHTML = `
+                                <div class="flex justify-between items-center bg-success/10 text-success border border-success/20 text-sm rounded-md py-2 px-5 mb-2" role="alert">
+                                    <span>Product added successfully!</span>
+                                    <button class="text-xl/[0] ml-2" data-fc-dismiss="dismiss-message" type="button">
+                                        <i class="ri-close-line text-xl"></i>
+                                    </button>
+                                </div>
+                            `;
+
+                            // Clear form after successful submission
+                            this.clearForm();
+
+                            // Attach the dismiss button event listener
+                            document.querySelector("#backend_success button[data-fc-dismiss='dismiss-message']").addEventListener("click", function () {
+                                messageContainer.classList.add('hidden');
+                            });
+                        }
+                    } catch (error) {
+                        if (error.response && error.response.data.message) {
+                            this.errorMessage = error.response.data.message;
+                        } else {
+                            console.error('Error submitting form:', error);
+                        }
+                    }
+                },
+                handleSuccess(file, response) {
+                    this.form.image_id = response.image_id;
+                    this.showMessage('success', 'File uploaded successfully!');
+                },
+                handleError(file, response) {
+                    let errorMessage = "Invalid file type. Only images (JPEG, PNG, GIF) are allowed.";
+                    if (file.size > 4 * 1024 * 1024) {
+                        errorMessage = `File size exceeds the maximum limit of 4MB.`;
+                    }
+                    this.showMessage('error', errorMessage);
+                },
+                showMessage(type, message) {
+                    const messageContainer = document.querySelector("#upload-message");
+                    const colorClass = type === 'success'
+                        ? 'bg-success/10 text-success border border-success/20'
+                        : 'bg-danger/10 text-danger border border-danger/20';
+
+                    messageContainer.classList.remove('hidden');
+                    messageContainer.innerHTML = `
+                    <div class="flex justify-between items-center ${colorClass} text-sm rounded-md py-2 px-5 mb-2" role="alert">
+                        <span>${message}</span>
+                        <button class="text-xl/[0] ml-2" data-fc-dismiss="dismiss-message" type="button">
+                            <i class="ri-close-line text-xl"></i>
+                        </button>
+                    </div>
+                `;
+
+                    document.querySelector("#upload-message button[data-fc-dismiss='dismiss-message']").addEventListener("click", function () {
+                        messageContainer.classList.add('hidden');
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+{% endblock %}

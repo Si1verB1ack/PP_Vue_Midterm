@@ -1,0 +1,203 @@
+{% extends "admin/layout/layout.html" %}
+
+<!-- ============================================================== -->
+<!-- Start Page Content here -->
+<!-- ============================================================== -->
+{% block page_content %}
+
+    <main class="p-6" id="app">
+        {{ super() }}
+
+        <div class="card">
+            <div class="p-6">
+                <div class="overflow-hidden">
+
+                    <div v-if="showOverlay"
+                         v-cloak
+                         class="transition-all fixed inset-0 z-40 bg-gray-900 bg-opacity-50 dark:bg-opacity-80"
+                         data-fc-overlay-backdrop=""></div>
+
+                    <h3 class="card-title mb-4">All users</h3>
+
+                    <div v-if="showSuccessMessage"
+                         v-cloak
+                         class="bg-success/10 text-success border border-success/20 text-sm rounded-md py-3 px-5 mb-2"
+                         role="alert">
+                        <span class="font-bold">Success</span> - [[ successMessage ]]
+                    </div>
+
+
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead>
+                        <tr class="bg-slate-100 dark:bg-slate-700">
+                            <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start">
+                                User
+                            </th>
+                            <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start">
+                                Gender
+                            </th>
+                            <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start">
+                                Email
+                            </th>
+                            <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start text-center">
+                                Role
+                            </th>
+                            <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start text-center">
+                                Action
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for user in users %}
+                            <tr>
+                                <th scope="row"
+                                    class="flex items-center gap-2 px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white">
+                                    {% if user.profile %}
+                                        <img class="w-8 h-8 rounded-full"
+                                             src="{{ url_for('static', filename='upload/profile/' + user.profile) }}"
+                                             alt="{{ user.name }}">
+                                    {% else %}
+                                        <img class="w-8 h-8 rounded-full"
+                                             src="{{ url_for('static', filename='images/default-avatar.jpg') }}"
+                                             alt="Default Avatar">
+                                    {% endif %}
+                                    <div class="whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">{{ user.name }}</div>
+                                </th>
+
+                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                    {{ 'Female' if user.gender == 1 else 'Male' }}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                    {{ user.email }}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                    {{ 'Admin' if user.role == 1 else 'User' }}
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                    <a href="{{ url_for('edit_user', id=user.id) }}"><i
+                                            class="ri-edit-line text-xl p-1 text-primary"></i>
+                                    </a>
+                                    <a @click="openModal('{{ user.id }}')" href="javascript:void(0)">
+                                        <i class="ri-delete-bin-2-line text-xl p-1 text-danger"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div v-if="showDeleteModal"
+             v-cloak
+             class="flex items-center justify-center w-full h-full fixed top-0 left-0 z-50 transition-all duration-500 overflow-y-auto">
+            <div class="flex items-center justify-center h-full">
+                <div class="sm:max-w-lg mx-auto bg-white shadow-sm rounded dark:bg-gray-800 dark:border-gray-700">
+                    <div class="flex justify-between items-center py-2.5 px-4 bg-danger dark:border-gray-700">
+                        <h3 class="font-medium text-white text-lg">Confirm Deletion</h3>
+                        <button @click="closeDeleteModal"
+                                class="inline-flex flex-shrink-0 justify-center items-center h-8 w-8 dark:text-gray-200">
+                            <i class="ri-close-line text-2xl text-white"></i>
+                        </button>
+                    </div>
+                    <div class="p-4 overflow-y-auto">
+                        <p class="text-gray-800 dark:text-gray-200">Are you sure you want to delete this user?</p>
+                    </div>
+                    <div class="flex justify-end items-center gap-2 p-4 border-t dark:border-gray-700">
+                        <button @click="closeDeleteModal" class="btn bg-light text-gray-800 transition-all"
+                                type="button">
+                            Cancel
+                        </button>
+                        <button @click="confirmDelete" class="btn bg-danger text-white">Delete</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Delete Modal -->
+
+
+{% endblock %}
+<!-- ============================================================== -->
+<!-- End Page content -->
+<!-- ============================================================== -->
+
+{% block customJs %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            delimiters: ['[[', ']]'],
+            data() {
+                return {
+                    showSuccessMessage: false,
+                    successMessage: '',  // Success message data property
+                    showDeleteModal: false,
+                    userIdToDelete: null,
+                    showOverlay: false,
+                };
+            },
+            mounted() {
+                this.checkUrlParams(); // Check URL parameters on mount
+            },
+            methods: {
+                checkUrlParams() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    console.log(urlParams.toString()); // Log URL parameters for debugging
+
+                    // Check for success parameters in the URL
+                    if (urlParams.has('success-edit') && urlParams.get('success-edit') === 'true') {
+                        this.showSuccessMessage = true;
+                        this.successMessage = 'User updated successfully!';
+                        this.removeSuccessParam();
+                    } else if (urlParams.has('success-delete') && urlParams.get('success-delete') === 'true') {
+                        this.showSuccessMessage = true;
+                        this.successMessage = 'User deleted successfully!';
+                        this.removeSuccessParam();
+                    } else {
+                        console.log("No success parameter found"); // Debugging line
+                    }
+                },
+                removeSuccessParam() {
+                    const url = new URL(window.location.href);
+                    url.searchParams.delete('success-edit');
+                    url.searchParams.delete('success-delete');
+                    window.history.replaceState({}, document.title, url);
+                },
+                openModal(userId) {
+                    this.userIdToDelete = userId; // Set user ID to delete
+                    this.showDeleteModal = true; // Show the delete modal
+                    this.showOverlay = true; // Show overlay behind the modal
+                },
+                closeDeleteModal() {
+                    this.showDeleteModal = false; // Hide the modal
+                    this.userIdToDelete = null; // Reset user ID
+                    this.showOverlay = false; // Hide overlay
+                },
+                confirmDelete() {
+                    if (this.userIdToDelete !== null) {
+                        this.showOverlay = true; // Show overlay during deletion
+                        axios.post('/admin/user/delete', { id: this.userIdToDelete })
+                            .then(response => {
+                                this.showSuccessMessage = true; // Show success message
+                                this.successMessage = 'User deleted successfully!'; // Set success message
+                                this.closeDeleteModal(); // Close the modal after deletion
+                                // Redirect to list page with success parameter
+                                window.location.href = "/admin/user/list?success-delete=true";
+                            })
+                            .catch(error => {
+                                console.error(error.response.data.error); // Log error response
+                                this.showOverlay = false; // Hide overlay on error
+                            });
+                    }
+                }
+            },
+        }).mount('#app');
+    </script>
+{% endblock %}
+

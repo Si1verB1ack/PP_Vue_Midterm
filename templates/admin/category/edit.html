@@ -1,0 +1,159 @@
+{% extends "admin/layout/layout.html" %}
+
+{% block page_content %}
+    <main class="p-6" id="app">
+        {{ super() }}
+        <div class="card">
+            <div class="p-6">
+                <div class="flex justify-between items-center">
+                    <h4 class="card-title mb-1">Edit Category</h4>
+                </div>
+                <div class="pt-5">
+                    <form action="/admin/category/edit?id={{ module.id }}" method="post" enctype="multipart/form-data"
+                          novalidate @submit.prevent="submitForm">
+                        <div class="grid grid-cols-1 gap-6 mb-3">
+                            <div>
+                                <label for="name" class="mb-2">Name</label>
+                                <input
+                                        type="text"
+                                        id="name"
+                                        v-model="form.name"
+                                        class="form-input"
+                                        placeholder="Category name"
+                                />
+                                <div v-cloak v-if="v$.form.name.$invalid && v$.form.name.$dirty" class="text-danger">
+                                    [[ v$.form.name.$errors[0].$message ]]
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="description" class="mb-2">Description</label>
+                                <textarea
+                                        id="description"
+                                        v-model="form.description"
+                                        rows="5"
+                                        class="form-input"
+                                        placeholder="Category description"
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="btn bg-primary text-white">Update</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+{% endblock %}
+
+{% block customJs %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue-demi"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vuelidate/core"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@vuelidate/validators"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+    <script>
+        const {createApp} = Vue;
+        const {useVuelidate} = Vuelidate;
+        const {required, minLength, maxLength, email, helpers} = VuelidateValidators;
+
+        createApp({
+            delimiters: ['[[', ']]'], // Set custom delimiters for this component
+            data() {
+                return {
+                    form: {
+                        name: '{{ category.name }}',
+                        description: '{{ category.description }}',
+                    },
+                    errorMessage: ''  // Store server-side error messages
+                };
+            },
+            validations() {
+                return {
+                    form: {
+                        name: {
+                            required: helpers.withMessage("Name is required", required),
+                        },
+                        description: {
+                            required: helpers.withMessage("Password is required", required),
+                        },
+                    }
+                };
+            },
+            setup() {
+                return {
+                    v$: useVuelidate(),
+                };
+            },
+            mounted() {
+                this.initDropzone()
+            },
+            methods: {
+                clearForm() {
+                    this.form = {
+                        name: '',
+                        description: '',
+                    };
+                    this.v$.$reset();
+                    this.errorMessage = '';
+                },
+                async submitForm() {
+                    this.v$.$touch();
+                    if (this.v$.$invalid) return;
+
+                    try {
+                        const response = await axios.post(`/admin/category/edit?id={{ module.id }}`, this.form, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        this.clearForm();
+                        window.location.href = "/admin/category/list?success-edit=true";
+
+                    } catch (error) {
+                        if (error.response && error.response.data.error) {
+                            this.errorMessage = error.response.data.error;
+                        } else {
+                            console.error('Error submitting form:', error);
+                        }
+                    }
+                },
+                handleSuccess(file, response) {
+                    this.form.image_id = response.image_id;
+                    this.showMessage('success', 'File uploaded successfully!');
+                },
+                handleError(file, response) {
+                    let errorMessage = "Invalid file type. Only images (JPEG, PNG, GIF) are allowed.";
+                    if (file.size > 4 * 1024 * 1024) {
+                        errorMessage = `File size exceeds the maximum limit of 4MB.`;
+                    }
+                    this.showMessage('error', errorMessage);
+                },
+                showMessage(type, message) {
+                    const messageContainer = document.querySelector("#upload-message");
+                    const colorClass = type === 'success'
+                        ? 'bg-success/10 text-success border border-success/20'
+                        : 'bg-danger/10 text-danger border border-danger/20';
+
+                    messageContainer.classList.remove('hidden');
+                    messageContainer.innerHTML = `
+                    <div class="flex justify-between items-center ${colorClass} text-sm rounded-md py-2 px-5 mb-2" role="alert">
+                        <span>${message}</span>
+                        <button class="text-xl/[0] ml-2" data-fc-dismiss="dismiss-message" type="button">
+                            <i class="ri-close-line text-xl"></i>
+                        </button>
+                    </div>
+                `;
+
+                    document.querySelector("#upload-message button[data-fc-dismiss='dismiss-message']").addEventListener("click", function () {
+                        messageContainer.classList.add('hidden');
+                    });
+                }
+            }
+        }).mount('#app');
+    </script>
+{% endblock %}
