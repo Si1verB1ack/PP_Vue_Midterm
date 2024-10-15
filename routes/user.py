@@ -12,6 +12,29 @@ app.config['TEMP_FOLDER'] = TEMP_FOLDER
 app.config['PROFILE_FOLDER'] = PROFILE_FOLDER
 
 
+@app.route("/admin/userGet")
+def user_get():
+    users = User.query.all()
+
+    # Creating a dictionary from the query result with all the specified fields
+    users_dict = [
+        {
+            'id': user.id,
+            'name': user.name,
+            'code': user.code,
+            'email': user.email,
+            'phone': user.phone,
+            'gender': user.gender,
+            'role': user.role,
+            'status': user.status,
+            'address': user.address,
+            'profile': user.profile
+        } for user in users
+    ]
+
+    return jsonify({'users': users_dict})
+
+
 @app.route("/admin/user/list")
 def user_list():
     module = {

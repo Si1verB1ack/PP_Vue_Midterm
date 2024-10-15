@@ -21,9 +21,14 @@
 
                     <div v-if="showSuccessMessage"
                          v-cloak
-                         class="bg-success/10 text-success border border-success/20 text-sm rounded-md py-3 px-5 mb-2"
+                         class="bg-success/10 text-success border border-success/20 text-sm rounded-md py-3 px-5 mb-2 flex justify-between items-center"
                          role="alert">
-                        <span class="font-bold">Success</span> - [[ successMessage ]]
+                        <div>
+                            <span class="font-bold">Success</span> - [[ successMessage ]]
+                        </div>
+                        <button @click="closeSuccessMessage" class="text-success font-bold ml-4">
+                            <i class="ri-close-line"></i>
+                        </button>
                     </div>
 
 
@@ -48,41 +53,32 @@
                         </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        {% for user in users %}
-                            <tr>
-                                <th scope="row"
-                                    class="flex items-center gap-2 px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-                                    {% if user.profile %}
-                                        <img class="w-8 h-8 rounded-full"
-                                             src="{{ url_for('static', filename='upload/profile/' + user.profile) }}"
-                                             alt="{{ user.name }}">
-                                    {% else %}
-                                        <img class="w-8 h-8 rounded-full"
-                                             src="{{ url_for('static', filename='images/default-avatar.jpg') }}"
-                                             alt="Default Avatar">
-                                    {% endif %}
-                                    <div class="whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">{{ user.name }}</div>
-                                </th>
-
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    {{ 'Female' if user.gender == 1 else 'Male' }}
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    {{ user.email }}
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    {{ 'Admin' if user.role == 1 else 'User' }}
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    <a href="{{ url_for('edit_user', id=user.id) }}"><i
-                                            class="ri-edit-line text-xl p-1 text-primary"></i>
-                                    </a>
-                                    <a @click="openModal('{{ user.id }}')" href="javascript:void(0)">
-                                        <i class="ri-delete-bin-2-line text-xl p-1 text-danger"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
+                        <tr v-for="user in users" :key="user.id"  v-cloak>
+                            <th scope="row"
+                                class="flex items-center gap-2 px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white">
+                                <img class="w-8 h-8 rounded-full"
+                                     :src="user.profile ? `/static/upload/profile/${user.profile}` : '/static/images/default-avatar.jpg'"
+                                     :alt="user.name || 'Default Avatar'">
+                                <div class="whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                    [[ user.name ]]
+                                </div>
+                            </th>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                [[ user.gender === 1 ? 'Female' : 'Male' ]]
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                [[ user.email ]]
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                [[ user.role === 1 ? 'Admin' : 'User' ]]
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                <a :href="'{{ url_for('edit_user', id='') }}' + user.id"><i class="ri-edit-line text-xl p-1 text-primary"></i></a>
+                                <a @click="openModal(user.id)" href="javascript:void(0)">
+                                    <i class="ri-delete-bin-2-line text-xl p-1 text-danger"></i>
+                                </a>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
                 </div>
@@ -129,7 +125,7 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
     <script>
-        const { createApp } = Vue;
+        const {createApp} = Vue;
 
         createApp({
             delimiters: ['[[', ']]'],
@@ -140,12 +136,23 @@
                     showDeleteModal: false,
                     userIdToDelete: null,
                     showOverlay: false,
+                    users: null
                 };
             },
             mounted() {
+                this.fetchUsers();  // Fetch users when component is mounted
                 this.checkUrlParams(); // Check URL parameters on mount
             },
             methods: {
+                fetchUsers() {
+                    axios.get('/admin/userGet')
+                        .then(response => {
+                            this.users = response.data.users;  // Assuming the backend sends users data as an array
+                        })
+                        .catch(error => {
+                            console.error('Error fetching users:', error);
+                        });
+                },
                 checkUrlParams() {
                     const urlParams = new URLSearchParams(window.location.search);
                     console.log(urlParams.toString()); // Log URL parameters for debugging
@@ -182,20 +189,26 @@
                 confirmDelete() {
                     if (this.userIdToDelete !== null) {
                         this.showOverlay = true; // Show overlay during deletion
-                        axios.post('/admin/user/delete', { id: this.userIdToDelete })
+                        axios.post('/admin/user/delete', {id: this.userIdToDelete})
                             .then(response => {
                                 this.showSuccessMessage = true; // Show success message
                                 this.successMessage = 'User deleted successfully!'; // Set success message
+                                this.removeUserFromList(this.userIdToDelete); // Remove the deleted user from the list
                                 this.closeDeleteModal(); // Close the modal after deletion
-                                // Redirect to list page with success parameter
-                                window.location.href = "/admin/user/list?success-delete=true";
+                                this.showOverlay = false; // Hide overlay
                             })
                             .catch(error => {
                                 console.error(error.response.data.error); // Log error response
                                 this.showOverlay = false; // Hide overlay on error
                             });
                     }
-                }
+                },
+                removeUserFromList(userId) {
+                    this.users = this.users.filter(user => user.id !== userId); // Filter out the deleted user
+                },
+                closeSuccessMessage() {
+                    this.showSuccessMessage = false;  // Hide the success message
+                },
             },
         }).mount('#app');
     </script>

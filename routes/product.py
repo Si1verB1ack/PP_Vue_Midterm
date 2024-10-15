@@ -131,7 +131,24 @@ def edit_product():
         product.current_stock = data.get('qty')  # Update current stock
         product.cost = data.get('cost')  # Update cost
         product.price = data.get('price')  # Update price
-        product.image = data.get('image')  # Update image ID or path
+        image_id = data.get('image_id')
+        image_record = TempImage.query.get(image_id)
+
+        if image_record:
+            image_name = image_record.name
+
+            # Construct the full path to the temporary image file
+            temp_file_path = os.path.join(app.config['TEMP_FOLDER'], image_name)
+
+            # Construct the full path to the final upload folder
+            final_file_path = os.path.join(app.config['PRODUCT_FOLDER'], image_name)
+
+            # Move the image from the temporary folder to the final folder
+            shutil.copy(temp_file_path, final_file_path)
+
+            # You can now set 'profile' to the new file path or name
+            product.image = image_name
+        # Update image ID or path
 
         try:
             # Commit the changes to the database
