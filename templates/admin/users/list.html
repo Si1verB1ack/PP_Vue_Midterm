@@ -140,8 +140,8 @@
                 };
             },
             mounted() {
-                this.fetchUsers();  // Fetch users when component is mounted
-                this.checkUrlParams(); // Check URL parameters on mount
+                this.fetchUsers();
+                this.checkUrlParams();
             },
             methods: {
                 fetchUsers() {
@@ -155,9 +155,8 @@
                 },
                 checkUrlParams() {
                     const urlParams = new URLSearchParams(window.location.search);
-                    console.log(urlParams.toString()); // Log URL parameters for debugging
+                    console.log(urlParams.toString());
 
-                    // Check for success parameters in the URL
                     if (urlParams.has('success-edit') && urlParams.get('success-edit') === 'true') {
                         this.showSuccessMessage = true;
                         this.successMessage = 'User updated successfully!';

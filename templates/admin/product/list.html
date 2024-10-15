@@ -18,9 +18,14 @@
 
                     <div v-if="showSuccessMessage"
                          v-cloak
-                         class="bg-success/10 text-success border border-success/20 text-sm rounded-md py-3 px-5 mb-2"
+                         class="bg-success/10 text-success border border-success/20 text-sm rounded-md py-3 px-5 mb-2 flex justify-between items-center"
                          role="alert">
-                        <span class="font-bold">Success</span> - [[ successMessage ]]
+                        <div>
+                            <span class="font-bold">Success</span> - [[ successMessage ]]
+                        </div>
+                        <button @click="closeSuccessMessage" class="text-success font-bold ml-4">
+                            <i class="ri-close-line"></i>
+                        </button>
                     </div>
 
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -47,43 +52,36 @@
                         </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        {% for product in products %}
-                            <tr>
-                                <th scope="row"
-                                    class="flex items-center gap-2 px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white">
-                                    {% if product.image %}
-                                        <img class="w-8 h-8 rounded-full"
-                                             src="{{ url_for('static', filename='upload/product/' + product.image) }}"
-                                             alt="{{ product.name }}">
-                                    {% else %}
-                                        <img class="w-8 h-8 rounded-full"
-                                             src="{{ url_for('static', filename='images/no-pictures.png') }}"
-                                             alt="Default Avatar">
-                                    {% endif %}
-                                    <div class="whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">{{ product.name }}</div>
-                                </th>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    {{ product.category.name }} <!-- Display category name -->
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    {{ product.code }} <!-- Replace with Product description -->
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    {{ product.current_stock }} qty <!-- Replace with Product description -->
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    ${{ product.price }} <!-- Replace with Product price -->
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    <a href="{{ url_for('edit_product', id=product.id) }}"><i
-                                            class="ri-edit-line text-xl p-1 text-primary"></i>
-                                    </a>
-                                    <a @click="openModal('{{ product.id }}')" href="javascript:void(0)">
-                                        <i class="ri-delete-bin-2-line text-xl p-1 text-danger"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
+                        <tr v-for="product in products" :key="product.id" v-cloak> <!-- Rename "user" to "product" -->
+                            <th scope="row"
+                                class="flex items-center gap-2 px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white">
+                                <img class="w-8 h-8 rounded-full"
+                                     :src="product.image ? `/static/upload/product/${product.image}` : '/static/images/no-pictures.png'"
+                                     :alt="product.name || 'Default Avatar'">
+
+                                <div class="whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">[[
+                                    product.name ]]
+                                </div>
+                            </th>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                [[ product.category_name ]] <!-- Display category name -->
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                [[ product.code ]] <!-- Replace with Product description -->
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                [[ product.current_stock ]] qty <!-- Replace with Product description -->
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                $[[ product.price ]] <!-- Replace with Product price -->
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                <a :href="'{{ url_for('edit_product', id='') }}' + product.id"><i
+                                        class="ri-edit-line text-xl p-1 text-primary"></i></a>
+                                <a @click="openModal(product.id)" href="javascript:void(0)"><i
+                                        class="ri-delete-bin-2-line text-xl p-1 text-danger"></i></a>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
 
@@ -129,32 +127,50 @@
         const {createApp} = Vue;
 
         createApp({
-            delimiters: ['[[', ']]'], // Set custom delimiters for this component
+            delimiters: ['[[', ']]'],
             data() {
                 return {
                     showSuccessMessage: false,
                     showDeleteModal: false,
-                    productIdToDelete: null, // Change to productId
+                    productIdToDelete: null,
                     showOverlay: false,
-                    successMessage: '', // Add successMessage property
+                    successMessage: '',
+                    products: []
                 };
             },
             mounted() {
-                const urlParams = new URLSearchParams(window.location.search);
-
-                if (urlParams.has('success-edit') && urlParams.get('success-edit') === 'true') {
-                    // Set success message for editing product
-                    this.successMessage = 'Product updated successfully!';
-                    this.showSuccessMessage = true;
-                    this.removeSuccessParam();
-                } else if (urlParams.has('success-delete') && urlParams.get('success-delete') === 'true') {
-                    // Set success message for deleting product
-                    this.successMessage = 'Product deleted successfully!';
-                    this.showSuccessMessage = true;
-                    this.removeSuccessParam();
-                }
+                this.fetchProducts();
+                this.checkUrlParams();
             },
             methods: {
+                closeSuccessMessage() {
+                    this.showSuccessMessage = false;  // Hide the success message
+                },
+                fetchProducts() {
+                    axios.get('/admin/ProductGet')
+                        .then(response => {
+                            this.products = response.data.products;  // Assuming the backend sends users data as an array
+                        })
+                        .catch(error => {
+                            console.error('Error fetching users:', error);
+                        });
+                },
+                checkUrlParams() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    console.log(urlParams.toString());
+
+                    if (urlParams.has('success-edit') && urlParams.get('success-edit') === 'true') {
+                        this.showSuccessMessage = true;
+                        this.successMessage = 'User updated successfully!';
+                        this.removeSuccessParam();
+                    } else if (urlParams.has('success-delete') && urlParams.get('success-delete') === 'true') {
+                        this.showSuccessMessage = true;
+                        this.successMessage = 'User deleted successfully!';
+                        this.removeSuccessParam();
+                    } else {
+                        console.log("No success parameter found"); // Debugging line
+                    }
+                },
                 removeSuccessParam() {
                     const url = new URL(window.location.href);
                     url.searchParams.delete('success-edit');
@@ -162,24 +178,25 @@
                     window.history.replaceState({}, document.title, url);
                 },
                 openModal(productId) {
-                    this.productIdToDelete = productId; // Change to productId
+                    this.productIdToDelete = productId;
                     this.showDeleteModal = true;
-                    this.showOverlay = true; // Show the modal
+                    this.showOverlay = true;
                 },
                 closeDeleteModal() {
-                    this.showDeleteModal = false; // Hide the modal
+                    this.showDeleteModal = false;
                     this.productIdToDelete = null;
-                    this.showOverlay = false; // Reset the product ID
+                    this.showOverlay = false;
                 },
                 confirmDelete() {
                     if (this.productIdToDelete !== null) {
                         this.showOverlay = true;
-                        axios.post('/admin/product/delete', {id: this.productIdToDelete}) // Change the delete URL to products
+                        axios.post('/admin/product/delete', {id: this.productIdToDelete})
                             .then(response => {
-                                console.log(response.data.message);
-                                this.$emit('productDeleted'); // Emit an event to refresh data
+                                // Remove the deleted product from the products array
+                                this.products = this.products.filter(product => product.id !== this.productIdToDelete);
+                                this.showSuccessMessage = true;
+                                this.successMessage = 'Product deleted successfully!';
                                 this.closeDeleteModal(); // Close the modal after deletion
-                                window.location.href = "/admin/product/list?success-delete=true";
                             })
                             .catch(error => {
                                 console.error(error.response.data.error);

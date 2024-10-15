@@ -15,8 +15,6 @@ app.config['PROFILE_FOLDER'] = PROFILE_FOLDER
 @app.route("/admin/userGet")
 def user_get():
     users = User.query.all()
-
-    # Creating a dictionary from the query result with all the specified fields
     users_dict = [
         {
             'id': user.id,
@@ -84,16 +82,12 @@ def user_add():
         if image_record:
             image_name = image_record.name
 
-            # Construct the full path to the temporary image file
             temp_file_path = os.path.join(app.config['TEMP_FOLDER'], image_name)
 
-            # Construct the full path to the final upload folder
             final_file_path = os.path.join(app.config['UPLOAD_FOLDER'], image_name)
 
-            # Move the image from the temporary folder to the final folder
             shutil.copy(temp_file_path, final_file_path)
 
-            # You can now set 'profile' to the new file path or name
             profile = image_name
 
         # Create a new User object

@@ -12,6 +12,19 @@ app.config['TEMP_FOLDER'] = TEMP_FOLDER
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
+@app.route("/admin/categoryGet")
+def category_get():
+    categories = Category.query.all()
+    category_dict = [
+        {
+            'id': category.id,
+            'name': category.name,
+            'description': category.description,
+        } for category in categories
+    ]
+    return jsonify({'categories': category_dict})
+
+
 @app.route("/admin/category/list")
 def category_list():
     module = {

@@ -21,10 +21,16 @@
 
                     <div v-if="showSuccessMessage"
                          v-cloak
-                         class="bg-success/10 text-success border border-success/20 text-sm rounded-md py-3 px-5 mb-2"
+                         class="bg-success/10 text-success border border-success/20 text-sm rounded-md py-3 px-5 mb-2 flex justify-between items-center"
                          role="alert">
-                        <span class="font-bold">Success</span> - [[ successMessage ]]
+                        <div>
+                            <span class="font-bold">Success</span> - [[ successMessage ]]
+                        </div>
+                        <button @click="closeSuccessMessage" class="text-success font-bold ml-4">
+                            <i class="ri-close-line"></i>
+                        </button>
                     </div>
+
 
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                         <thead>
@@ -41,27 +47,24 @@
                         </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        {% for category in categories %}
-                            <tr>
-                                <th scope="row"
-                                    class="px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white text-start">
-                                    {{ category.name }}  <!-- Assuming 'name' is a field in your Category model -->
-                                </th>
-                                <td
-                                        class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    {{ category.description }}
-                                    <!-- Assuming 'description' is a field in your Category model -->
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                    <a href="{{ url_for('edit_category', id=category.id) }}"><i
-                                            class="ri-edit-line text-xl p-1 text-primary"></i>
-                                    </a>
-                                    <a @click="openModal('{{ category.id }}')" href="javascript:void(0)">
-                                        <i class="ri-delete-bin-2-line text-xl p-1 text-danger"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
+                        <tr v-for="category in categories" :key="category.id" v-cloak>
+                            <th scope="row"
+                                class="px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white text-start">
+                                [[ category.name ]]
+                            </th>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                [[ category.description ]]
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                <a :href="'{{ url_for('edit_category', id='') }}' + category.id">
+                                    <i class="ri-edit-line text-xl p-1 text-primary" aria-label="Edit category"></i>
+                                </a>
+                                <a @click="openModal(category.id)" href="javascript:void(0)">
+                                    <i class="ri-delete-bin-2-line text-xl p-1 text-danger"
+                                       aria-label="Delete category"></i>
+                                </a>
+                            </td>
+                        </tr>
                         </tbody>
                     </table>
 
@@ -109,35 +112,56 @@
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 
     <script>
-        const { createApp } = Vue;
+        const {createApp} = Vue;
 
         createApp({
-            delimiters: ['[[', ']]'], // Set custom delimiters for this component
+            delimiters: ['[[', ']]'],
             data() {
                 return {
                     showSuccessMessage: false,
                     showDeleteModal: false,
                     userIdToDelete: null,
                     showOverlay: false,
-                    successMessage: '', // Add successMessage property
+                    successMessage: '',
+                    categories: null
                 };
             },
             mounted() {
-                const urlParams = new URLSearchParams(window.location.search);
-
-                if (urlParams.has('success-edit') && urlParams.get('success-edit') === 'true') {
-                    // Set success message for editing user
-                    this.successMessage = 'User updated successfully!';
-                    this.showSuccessMessage = true;
-                    this.removeSuccessParam();
-                } else if (urlParams.has('success-delete') && urlParams.get('success-delete') === 'true') {
-                    // Set success message for deleting user
-                    this.successMessage = 'User deleted successfully!';
-                    this.showSuccessMessage = true;
-                    this.removeSuccessParam();
-                }
+                this.fetchUsers();
+                this.checkUrlParams();
             },
             methods: {
+                closeSuccessMessage() {
+                    this.showSuccessMessage = false;
+                },
+                fetchUsers() {
+                    axios.get('/admin/categoryGet')
+                        .then(response => {
+                            this.categories = response.data.categories;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching users:', error);
+                        });
+                },
+                hideSuccessMessage() {
+                    this.showSuccessMessage = false; // Hide the success message
+                },
+                checkUrlParams() {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    console.log(urlParams.toString());
+
+                    if (urlParams.has('success-edit') && urlParams.get('success-edit') === 'true') {
+                        this.showSuccessMessage = true;
+                        this.successMessage = 'User updated successfully!';
+                        this.removeSuccessParam();
+                    } else if (urlParams.has('success-delete') && urlParams.get('success-delete') === 'true') {
+                        this.showSuccessMessage = true;
+                        this.successMessage = 'User deleted successfully!';
+                        this.removeSuccessParam();
+                    } else {
+                        console.log("No success parameter found");
+                    }
+                },
                 removeSuccessParam() {
                     const url = new URL(window.location.href);
                     url.searchParams.delete('success-edit');
@@ -155,18 +179,21 @@
                     this.showOverlay = false; // Reset the user ID
                 },
                 confirmDelete() {
-                    if (this.userIdToDelete !== null) {
-                        this.showOverlay = true;
-                        axios.post('/admin/category/delete', { id: this.userIdToDelete })
+                    if (this.userIdToDelete !== null) { // Use userIdToDelete here
+                        this.showOverlay = true; // Show overlay while processing
+
+                        // Send delete request to the server
+                        axios.post('/admin/category/delete', {id: this.userIdToDelete}) // Ensure you're sending the right ID
                             .then(response => {
-                                console.log(response.data.message);
-                                this.$emit('userDeleted'); // Emit an event to refresh data
+                                // Handle successful deletion
+                                this.categories = this.categories.filter(category => category.id !== this.userIdToDelete);
+                                this.showSuccessMessage = true;
+                                this.successMessage = 'Category deleted successfully!';
                                 this.closeDeleteModal(); // Close the modal after deletion
-                                window.location.href = "/admin/category/list?success-delete=true";
                             })
                             .catch(error => {
-                                console.error(error.response.data.error);
-                                this.showOverlay = false;
+                                console.error('Error deleting category:', error.response.data.error);
+                                this.showOverlay = false; // Hide overlay in case of error
                             });
                     }
                 }
