@@ -31,43 +31,55 @@
                         </button>
                     </div>
 
+                    <div class="relative">
 
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead>
-                        <tr class="bg-slate-100 dark:bg-slate-700">
-                            <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start">
-                                Category Name
-                            </th>
-                            <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start">
-                                Description
-                            </th>
-                            <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start text-center">
-                                Action
-                            </th>
-                        </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <tr v-for="category in categories" :key="category.id" v-cloak>
-                            <th scope="row"
-                                class="px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white text-start">
-                                [[ category.name ]]
-                            </th>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                [[ category.description ]]
-                            </td>
-                            <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
-                                <a :href="'{{ url_for('edit_category', id='') }}' + category.id">
-                                    <i class="ri-edit-line text-xl p-1 text-primary" aria-label="Edit category"></i>
-                                </a>
-                                <a @click="openModal(category.id)" href="javascript:void(0)">
-                                    <i class="ri-delete-bin-2-line text-xl p-1 text-danger"
-                                       aria-label="Delete category"></i>
-                                </a>
-                            </td>
-                        </tr>
-                        </tbody>
-                    </table>
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead>
+                            <tr class="bg-slate-100 dark:bg-slate-700">
+                                <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start">
+                                    Category Name
+                                </th>
+                                <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start">
+                                    Description
+                                </th>
+                                <th class="font-semibold px-4 py-4 text-slate-900 dark:text-slate-200 text-start text-center">
+                                    Action
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <tr v-for="category in categories" :key="category.id" v-cloak>
+                                <th scope="row"
+                                    class="px-4 py-4 text-gray-900 whitespace-nowrap dark:text-white text-start">
+                                    [[ category.name ]]
+                                </th>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                    [[ category.description ]]
+                                </td>
+                                <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-500 dark:text-gray-200">
+                                    <a :href="'{{ url_for('edit_category', id='') }}' + category.id">
+                                        <i class="ri-edit-line text-xl p-1 text-primary" aria-label="Edit category"></i>
+                                    </a>
+                                    <a @click="openModal(category.id)" href="javascript:void(0)">
+                                        <i class="ri-delete-bin-2-line text-xl p-1 text-danger"
+                                           aria-label="Delete category"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
 
+                        <div v-if="loading" v-cloak
+                             class="mt-5 mb-5 flex justify-center items-center bg-white/75 dark:bg-gray-900/75 z-50">
+                            <div class="h-12 w-12">
+                                <span class="animate-ping inline-flex h-full w-full rounded-full bg-danger/75"></span>
+                            </div>
+                        </div>
+                        <div v-if="categories.length === 0 && loading ===false" v-cloak
+                             class="mt-5 flex justify-center items-center bg-white/75 dark:bg-gray-900/75 z-50">
+                            The list is empty
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -123,7 +135,9 @@
                     userIdToDelete: null,
                     showOverlay: false,
                     successMessage: '',
-                    categories: null
+                    categories: [],
+                    loading: false
+
                 };
             },
             mounted() {
@@ -135,11 +149,17 @@
                     this.showSuccessMessage = false;
                 },
                 fetchUsers() {
+                    this.loading = true;// Assuming the backend sends users data as an array
+
                     axios.get('/admin/categoryGet')
                         .then(response => {
+                            this.loading = false;// Assuming the backend sends users data as an array
+
                             this.categories = response.data.categories;
                         })
                         .catch(error => {
+                            this.loading = false;// Assuming the backend sends users data as an array
+
                             console.error('Error fetching users:', error);
                         });
                 },
